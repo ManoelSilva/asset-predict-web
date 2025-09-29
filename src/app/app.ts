@@ -12,6 +12,7 @@ import { apiConfig } from './app.config';
 interface PredictionRow {
   asset: string;
   prediction: string;
+  datetime: string;
 }
 
 @Component({
@@ -79,7 +80,11 @@ export class App {
     dialogRef.afterClosed().subscribe(() => {
       this.predictionRows = [
         ...this.predictionRows,
-        { asset: this.selectedAsset, prediction: result }
+        { 
+          asset: this.selectedAsset, 
+          prediction: result,
+          datetime: new Date().toLocaleString()
+        }
       ];
     });
   }
