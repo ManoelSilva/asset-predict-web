@@ -2,12 +2,7 @@
   <div style="width: 100%; max-width: 500px; margin: 0 auto;">
     <h1>Asset Prediction</h1>
     <form>
-      <mat-form-field appearance="fill" style="width: 100%;">
-        <mat-label>Select Asset</mat-label>
-        <mat-select [(ngModel)]="selectedAsset" name="asset">
-          <mat-option *ngFor="let asset of assets" [value]="asset">{{ asset }}</mat-option>
-        </mat-select>
-      </mat-form-field>
+      <asset-search-dropdown [pageSize]="10" (assetSelected)="onAssetSelected($event)"></asset-search-dropdown>
       <button mat-raised-button color="primary" type="button" (click)="onPredict()" [disabled]="!selectedAsset">Predict</button>
     </form>
 
