@@ -77,7 +77,7 @@ export class AssetSearchDropdownComponent {
 
   async fetchAssets(page = 1) {
     this.loading = true;
-    let url = `http://localhost:5002/assets?page=${page}&page_size=${this.pageSize}`;
+    let url = `${apiConfig.assetsUrl}/assets?page=${page}&page_size=${this.pageSize}`;
     if (this.searchTerm && this.searchTerm.length >= 3) {
       url += `&search=${encodeURIComponent(this.searchTerm)}`;
     }
