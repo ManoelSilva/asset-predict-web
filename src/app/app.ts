@@ -158,7 +158,7 @@ export class App {
   constructor(private dialog: MatDialog) {}
   async callPredictionApi(ticker: string): Promise<string> {
     try {
-      const response = await fetch(`${apiConfig.predictionUrl}/api/b3/predict`, {
+      const response = await fetch(`${apiConfig.predictionUrl}/predict`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ "ticker": ticker })

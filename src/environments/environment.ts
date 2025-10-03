@@ -1,5 +1,5 @@
 export const environment = {
   production: false,
-  predictionUrl: '/api/b3',
+  predictionUrl: 'http://localhost:5001/api/b3',
   assetsUrl: ''
 };
