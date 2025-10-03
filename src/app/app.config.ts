@@ -10,6 +10,6 @@ export const appConfig: ApplicationConfig = {
 };
 
 export const apiConfig = {
-  predictionUrl: environment.predictionUrl || 'http://localhost:5001',
-  assetsUrl: environment.assetsUrl || 'http://localhost:5002',
+  predictionUrl: environment.predictionUrl !== undefined && environment.predictionUrl !== null ? environment.predictionUrl : 'http://localhost:5001',
+  assetsUrl: environment.assetsUrl !== undefined && environment.assetsUrl !== null ? environment.assetsUrl : 'http://localhost:5002',
 };
