@@ -3,7 +3,16 @@
     <h1>Asset Prediction</h1>
     <form>
       <asset-search-dropdown [pageSize]="10" (assetSelected)="onAssetSelected($event)"></asset-search-dropdown>
-      <button mat-raised-button color="primary" type="button" (click)="onPredict()" [disabled]="!selectedAsset">Predict</button>
+      <div style="display: flex; gap: 16px; margin-top: 8px;">
+        <mat-form-field appearance="outline" style="flex: 1;">
+          <mat-label>Model Type</mat-label>
+          <mat-select [(ngModel)]="selectedModel" (ngModelChange)="onModelChange()" name="modelType">
+            <mat-option value="lstm">LSTM</mat-option>
+            <mat-option value="rf">RandomForest</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <button mat-raised-button color="primary" type="button" (click)="onPredict()" [disabled]="!selectedAsset" style="height: 56px;">Predict</button>
+      </div>
     </form>
 
     <ng-container *ngIf="predictionRows.length > 0">
@@ -17,12 +26,20 @@
           <th mat-header-cell *matHeaderCellDef>Prediction</th>
           <td mat-cell *matCellDef="let row">{{ row.prediction }}</td>
         </ng-container>
+        <ng-container matColumnDef="last_price">
+          <th mat-header-cell *matHeaderCellDef>Last Price</th>
+          <td mat-cell *matCellDef="let row">{{ row.last_price | currency:'BRL':'symbol':'1.2-2' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="predicted_price">
+          <th mat-header-cell *matHeaderCellDef>Price Prediction</th>
+          <td mat-cell *matCellDef="let row">{{ row.predicted_price | currency:'BRL':'symbol':'1.2-2' }}</td>
+        </ng-container>
         <ng-container matColumnDef="datetime">
           <th mat-header-cell *matHeaderCellDef>Date & Time</th>
           <td mat-cell *matCellDef="let row">{{ row.datetime }}</td>
         </ng-container>
-        <tr mat-header-row *matHeaderRowDef="['asset', 'prediction', 'datetime']"></tr>
-        <tr mat-row *matRowDef="let row; columns: ['asset', 'prediction', 'datetime'];"></tr>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
       </table>
     </ng-container>
   </div>
