@@ -12,6 +12,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 interface PredictionRow {
   asset: string;
@@ -148,6 +149,7 @@ export class AssetSearchDropdownComponent {
     MatDialogModule,
     MatTableModule,
     FormsModule,
+    MatProgressSpinnerModule,
     AssetSearchDropdownComponent
   ],
   templateUrl: './app.html',
@@ -157,6 +159,7 @@ export class App {
   protected readonly title = signal('asset-predict-web');
   selectedAsset = '';
   selectedModel = 'lstm';
+  loading = false;
   predictionRows: PredictionRow[] = [];
   
   get displayedColumns(): string[] {
@@ -188,39 +191,44 @@ export class App {
 
   async onPredict() {
     if (!this.selectedAsset) return;
-    const data = await this.callPredictionApi(this.selectedAsset, this.selectedModel);
-    
-    let predictionStr = 'Prediction failed';
-    let lastPrice: number | undefined;
-    let predictedPrice: number | undefined;
+    this.loading = true;
+    try {
+      const data = await this.callPredictionApi(this.selectedAsset, this.selectedModel);
+      
+      let predictionStr = 'Prediction failed';
+      let lastPrice: number | undefined;
+      let predictedPrice: number | undefined;
 
-    if (data && Array.isArray(data.predictions) && data.predictions.length > 0) {
-      predictionStr = data.predictions[0];
-      if (this.selectedModel === 'lstm') {
-        lastPrice = data.last_price;
-        predictedPrice = data.predicted_price;
-      }
-    } else if (data && data.message) {
-         // fallback if predictions array is missing but message is there? 
-         // Logic above handles 'predictions' check.
-    }
-
-    const dialogRef = this.dialog.open(PredictionDialog, {
-      data: { prediction: predictionStr }
-    });
-    
-    dialogRef.afterClosed().subscribe(() => {
-      this.predictionRows = [
-        ...this.predictionRows,
-        { 
-          asset: this.selectedAsset, 
-          prediction: predictionStr,
-          last_price: lastPrice,
-          predicted_price: predictedPrice,
-          datetime: new Date().toLocaleString()
+      if (data && Array.isArray(data.predictions) && data.predictions.length > 0) {
+        predictionStr = data.predictions[0];
+        if (this.selectedModel === 'lstm') {
+          lastPrice = data.last_price;
+          predictedPrice = data.predicted_price;
         }
-      ];
-    });
+      } else if (data && data.message) {
+           // fallback if predictions array is missing but message is there? 
+           // Logic above handles 'predictions' check.
+      }
+
+      const dialogRef = this.dialog.open(PredictionDialog, {
+        data: { prediction: predictionStr }
+      });
+      
+      dialogRef.afterClosed().subscribe(() => {
+        this.predictionRows = [
+          ...this.predictionRows,
+          { 
+            asset: this.selectedAsset, 
+            prediction: predictionStr,
+            last_price: lastPrice,
+            predicted_price: predictedPrice,
+            datetime: new Date().toLocaleString()
+          }
+        ];
+      });
+    } finally {
+      this.loading = false;
+    }
   }
   onAssetSelected(ticker: string) {
     this.selectedAsset = ticker;
