@@ -12,10 +12,13 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 interface PredictionRow {
   asset: string;
   prediction: string;
+  last_price?: number;
+  predicted_price?: number;
   datetime: string;
 }
 
@@ -146,6 +149,7 @@ export class AssetSearchDropdownComponent {
     MatDialogModule,
     MatTableModule,
     FormsModule,
+    MatProgressSpinnerModule,
     AssetSearchDropdownComponent
   ],
   templateUrl: './app.html',
@@ -154,42 +158,77 @@ export class AssetSearchDropdownComponent {
 export class App {
   protected readonly title = signal('asset-predict-web');
   selectedAsset = '';
+  selectedModel = 'lstm';
+  loading = false;
   predictionRows: PredictionRow[] = [];
+  
+  get displayedColumns(): string[] {
+    return this.selectedModel === 'lstm'
+      ? ['asset', 'prediction', 'last_price', 'predicted_price', 'datetime']
+      : ['asset', 'prediction', 'datetime'];
+  }
+
   constructor(private dialog: MatDialog) {}
-  async callPredictionApi(ticker: string): Promise<string> {
+
+  onModelChange() {
+    this.predictionRows = [];
+  }
+
+  async callPredictionApi(ticker: string, modelType: string): Promise<any> {
     try {
       const response = await fetch(`${apiConfig.predictionUrl}/predict`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ "ticker": ticker })
+        body: JSON.stringify({ "model_type": modelType, "ticker": ticker })
       });
       if (!response.ok) throw new Error('API error');
-      const data = await response.json();
-      if (Array.isArray(data.predictions) && data.predictions.length > 0) {
-        return data.predictions[0];
-      }
-      return 'No prediction returned';
+      return await response.json();
     } catch (err) {
       console.error('Prediction API error:', err);
-      return 'Prediction failed';
+      return null;
     }
   }
+
   async onPredict() {
     if (!this.selectedAsset) return;
-    const result = await this.callPredictionApi(this.selectedAsset);
-    const dialogRef = this.dialog.open(PredictionDialog, {
-      data: { prediction: result }
-    });
-    dialogRef.afterClosed().subscribe(() => {
-      this.predictionRows = [
-        ...this.predictionRows,
-        { 
-          asset: this.selectedAsset, 
-          prediction: result,
-          datetime: new Date().toLocaleString()
+    this.loading = true;
+    try {
+      const data = await this.callPredictionApi(this.selectedAsset, this.selectedModel);
+      
+      let predictionStr = 'Prediction failed';
+      let lastPrice: number | undefined;
+      let predictedPrice: number | undefined;
+
+      if (data && Array.isArray(data.predictions) && data.predictions.length > 0) {
+        predictionStr = data.predictions[0];
+        if (this.selectedModel === 'lstm') {
+          lastPrice = data.last_price;
+          predictedPrice = data.predicted_price;
         }
-      ];
-    });
+      } else if (data && data.message) {
+           // fallback if predictions array is missing but message is there? 
+           // Logic above handles 'predictions' check.
+      }
+
+      const dialogRef = this.dialog.open(PredictionDialog, {
+        data: { prediction: predictionStr }
+      });
+      
+      dialogRef.afterClosed().subscribe(() => {
+        this.predictionRows = [
+          ...this.predictionRows,
+          { 
+            asset: this.selectedAsset, 
+            prediction: predictionStr,
+            last_price: lastPrice,
+            predicted_price: predictedPrice,
+            datetime: new Date().toLocaleString()
+          }
+        ];
+      });
+    } finally {
+      this.loading = false;
+    }
   }
   onAssetSelected(ticker: string) {
     this.selectedAsset = ticker;
